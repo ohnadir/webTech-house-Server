@@ -62,11 +62,27 @@ async function run() {
   })
 
   // get a single parts from mongodb 
-  app.get('/parts/:id',verifyToken, async (req, res) => {
+  app.get('/parts/:id', async (req, res) => {
     const id = req.params.id;
     console.log("from users single id");
     const query = { _id: ObjectId(id) };
     const result = await partsCollection.findOne(query);
+    res.send(result);
+  })
+
+  // get a single parts from mongodb 
+  app.put('/parts/:id', async (req, res) => {
+    const id = req.params.id;
+    const updatedQuantity = req.body;
+    console.log("Updated Quantity");
+    const filter = { _id: ObjectId(id) };
+    const options = { upsert: true };
+    const updatedDoc = {
+      $set: {
+        quantity : updatedQuantity.newQuantity
+      }
+    }
+    const result = await partsCollection.updateOne(filter, updatedDoc, options);
     res.send(result);
   })
 
