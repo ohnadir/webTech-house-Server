@@ -17,7 +17,40 @@ async function run() {
   await client.connect();
   const partsCollection = client.db('webTech-House').collection('parts');
   const reviewsCollection = client.db('webTech-House').collection('reviews');
+  const usersCollection = client.db('webTech-House').collection('users');
   
+
+  // function for user access
+  function verifyToken(req, res, next){
+    const authHeader = req.headers.authorization;
+    if (!authHeader){
+      return res.status(401).send({message: 'UnAuthorized access'})
+    }
+    const token = authHeader.split(' ')[1];
+    jwt.verify(token, process.env.ACCESS_TOKEN, function(err, decoded){
+      if(err) {
+        return res.status(403).send({ message: 'Forbidden access' })
+      }
+      req.decoded(decoded);
+      next();
+    })
+  }
+
+  // post all login or singup user 
+  app.put('/users', async (req, res) => {
+    const email = req.params.email;
+    const user = req.body;
+    const filter = { email: email };
+    const options = { upsert: true };
+    const updatedDoc = {
+      $set: user,
+    };
+    const result = await usersCollection.updateOne(filter, updatedDoc, options);
+    const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN, { expiresIn: '1h' });
+    res.send({result, token})
+  })
+
+
 
   // get all parts
   app.get('/parts', async (req, res) => {
