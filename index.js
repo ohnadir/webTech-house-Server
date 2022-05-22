@@ -37,7 +37,7 @@ async function run() {
   }
 
   // post all login or singup user 
-  app.put('/users', async (req, res) => {
+  app.put('/users/:email', async (req, res) => {
     const email = req.params.email;
     const user = req.body;
     const filter = { email: email };
@@ -53,14 +53,14 @@ async function run() {
 
 
   // get all parts
-  app.get('/parts', async (req, res) => {
+  app.get('/parts',verifyToken, async (req, res) => {
     const query = {};
     const result = await partsCollection.find(query).toArray();
     res.send(result);
   })
 
   // get all reviews
-  app.get('/reviews', async (req, res) => {
+  app.get('/reviews', verifyToken, async (req, res) => {
     const query = {};
     const result = await reviewsCollection.find(query).toArray();
     res.send(result);
