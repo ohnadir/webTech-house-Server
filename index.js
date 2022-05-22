@@ -84,13 +84,13 @@ async function run() {
   })
 
   // purchase item store on mongodb
-  app.post('/purchase', verifyToken, async (req, res) => {
+  app.post('/purchase', async (req, res) => {
     const newItem = req.body;
     const result = await purchaseCollection.insertOne(newItem);
     res.send(result);
   })
   // get purchase item from mongodb
-  app.get('/purchase', verifyToken, async (req, res) => {
+  app.get('/purchase', async (req, res) => {
     const query = {};
     const result = await purchaseCollection.find(query).toArray();
     res.send(result);
