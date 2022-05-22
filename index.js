@@ -86,16 +86,27 @@ async function run() {
   // purchase item store on mongodb
   app.post('/purchase', verifyToken, async (req, res) => {
     const newItem = req.body;
-    console.log(newItem);
     const result = await purchaseCollection.insertOne(newItem);
     res.send(result);
-    console.log("insert one");
+  })
+  // get purchase item from mongodb
+  app.get('/purchase', verifyToken, async (req, res) => {
+    const query = {};
+    const result = await purchaseCollection.find(query).toArray();
+    res.send(result);
   })
 
-  
+  // post review 
+  app.post('/reviews', verifyToken, async (req, res) => {
+    const newReview = req.body;
+    const result = await reviewsCollection.insertOne(newReview);
+    res.send(result);
+    console.log('Connect from server');
+  })
+
 
   // get all reviews
-  app.get('/reviews',  async (req, res) => {
+  app.get('/reviews', async (req, res) => {
     const query = {};
     const result = await reviewsCollection.find(query).toArray();
     res.send(result);
