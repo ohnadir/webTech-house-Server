@@ -16,6 +16,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run() {
   await client.connect();
   const partsCollection = client.db('webTech-House').collection('parts');
+  const reviewsCollection = client.db('webTech-House').collection('reviews');
   
 
   // get all parts
@@ -25,7 +26,12 @@ async function run() {
     res.send(result);
   })
 
-  
+  // get all reviews
+  app.get('/reviews', async (req, res) => {
+    const query = {};
+    const result = await reviewsCollection.find(query).toArray();
+    res.send(result);
+  })
 }
 run().catch(console.dir);
 
