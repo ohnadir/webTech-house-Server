@@ -2,7 +2,7 @@ const express = require('express')
 const cors = require('cors')
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express()
 const port = process.env.PORT || 5000;
 
@@ -18,6 +18,7 @@ async function run() {
   const partsCollection = client.db('webTech-House').collection('parts');
   const reviewsCollection = client.db('webTech-House').collection('reviews');
   const usersCollection = client.db('webTech-House').collection('users');
+  const purchaseCollection = client.db('webTech-House').collection('purchase');
   
 
   // function for user access
@@ -53,14 +54,24 @@ async function run() {
 
 
   // get all parts
-  app.get('/parts',verifyToken, async (req, res) => {
+  app.get('/parts', async (req, res) => {
     const query = {};
+    
     const result = await partsCollection.find(query).toArray();
     res.send(result);
   })
 
+  // get a single parts from mongodb 
+  app.get('/parts/:id',verifyToken, async (req, res) => {
+    const id = req.params.id;
+    console.log("from users single id");
+    const query = { _id: ObjectId(id) };
+    const result = await partsCollection.findOne(query);
+    res.send(result);
+  })
+
   // get all reviews
-  app.get('/reviews', verifyToken, async (req, res) => {
+  app.get('/reviews',  async (req, res) => {
     const query = {};
     const result = await reviewsCollection.find(query).toArray();
     res.send(result);
