@@ -19,6 +19,7 @@ async function run() {
   const reviewsCollection = client.db('webTech-House').collection('reviews');
   const usersCollection = client.db('webTech-House').collection('users');
   const purchaseCollection = client.db('webTech-House').collection('purchase');
+  const userInfoCollection = client.db('webTech-House').collection('userInfo');
   
 
   // function for user access
@@ -91,7 +92,8 @@ async function run() {
   })
   // get purchase item from mongodb
   app.get('/purchase', async (req, res) => {
-    const query = {};
+    const email = req.query.email;
+    const query = { buyerEmail: email };
     const result = await purchaseCollection.find(query).toArray();
     res.send(result);
   })
@@ -101,16 +103,57 @@ async function run() {
     const newReview = req.body;
     const result = await reviewsCollection.insertOne(newReview);
     res.send(result);
-    console.log('Connect from server');
   })
 
-
-  // get all reviews
-  app.get('/reviews', async (req, res) => {
+   // get all reviews
+   app.get('/reviews', async (req, res) => {
     const query = {};
     const result = await reviewsCollection.find(query).toArray();
     res.send(result);
   })
+  
+  // post users information
+  app.post('/userInfo', async (req, res) => {
+    const information = req.body;
+    const result = await userInfoCollection.insertOne(information);
+    res.send(result);
+    
+  })
+   // get users information
+  app.get('/userInfo', async (req, res) => {
+    const email = req.query.email;
+    const query = { email: email };
+    const result = await userInfoCollection.find(query).toArray();
+    res.send(result);
+  })
+
+  // get a single userInfo from mongodb 
+  app.get('/userInfo/:id', async (req, res) => {
+    const id = req.params.id;
+    const query = { _id: ObjectId(id) };
+    const result = await userInfoCollection.findOne(query);
+    res.send(result);
+  })
+  
+  // get a single userInfo from mongodb
+  app.put('/userInfo/:id', async (req, res) => {
+    const id = req.params.id;
+    const updatedInfo = req.body;
+    const filter = { _id: ObjectId(id) };
+    const options = { upsert: true };
+    const updatedDoc = {
+      $set: {
+        education : updatedInfo.education,
+        location : updatedInfo.location,
+        number : updatedInfo.number,
+        linkedin : updatedInfo.linkedin,
+      }
+    }
+    const result = await userInfoCollection.updateOne(filter, updatedDoc, options);
+    res.send(result);
+  })
+
+ 
 }
 run().catch(console.dir);
 
