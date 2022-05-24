@@ -1,6 +1,7 @@
 const express = require('express')
 const cors = require('cors')
 require('dotenv').config();
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express()
@@ -20,6 +21,7 @@ async function run() {
   const usersCollection = client.db('webTech-House').collection('users');
   const purchaseCollection = client.db('webTech-House').collection('purchase');
   const userInfoCollection = client.db('webTech-House').collection('userInfo');
+  const paymentsCollection = client.db('webTech-House').collection('payments');
   
 
   // function for user access
@@ -97,6 +99,13 @@ async function run() {
     const result = await purchaseCollection.find(query).toArray();
     res.send(result);
   })
+  // get a single purchase from mongodb 
+  app.get('/purchase/:id', async (req, res) => {
+    const id = req.params.id;
+    const query = { _id: ObjectId(id) };
+    const result = await purchaseCollection.findOne(query);
+    res.send(result);
+  })
 
   // post review 
   app.post('/reviews', verifyToken, async (req, res) => {
@@ -137,7 +146,7 @@ async function run() {
   
   // get a single userInfo from mongodb
   app.put('/userInfo/:id', async (req, res) => {
-    const id = req.params.id;
+    const id = req.params._id;
     const updatedInfo = req.body;
     const filter = { _id: ObjectId(id) };
     const options = { upsert: true };
@@ -153,6 +162,47 @@ async function run() {
     res.send(result);
   })
 
+  app.post('/create-payment-intent', async (req, res) => {
+    const purchase = req.body;
+    const price = purchase.totalPrice;
+    const amount = price * 100;
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount,
+      currency: "usd",
+      payment_method_types: ['card']
+    });
+    res.send({ clientSecret: paymentIntent.client_secret });
+  });
+
+ /*  app.patch('/purchase/:id', async (res, req) => {
+    const id = req.params.id;
+    const payment = req.body;
+    const filter = { _id: ObjectId(id) };
+    const updatedDoc = {
+      $set: {
+        paid: true,
+        transactionId :  payment.transactionId
+      }
+    }
+    const updatedPayment = await purchaseCollection.updateOne(filter, updatedDoc);
+    const result = await paymentsCollection.insertOne(payment);
+    res.send(updatedPayment);
+  }) */
+
+  app.patch('/purchase/:id', async (req, res) => {
+    const id = req.params.id;
+    const payment = req.body;
+    const filter = { _id: ObjectId(id) };
+    const updatedDoc = {
+      $set: {
+        paid: true,
+        transactionId :  payment.transactionId
+      }
+    }
+    const updatedPayment = await purchaseCollection.updateOne(filter, updatedDoc);
+    const result = await paymentsCollection.insertOne(payment);
+    res.send(updatedPayment);
+  })
  
 }
 run().catch(console.dir);
