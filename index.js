@@ -35,11 +35,20 @@ async function run() {
       if(err) {
         return res.status(403).send({ message: 'Forbidden access' })
       }
-      req.decoded(decoded);
+      req.decoded = decoded;
       next();
     })
   }
-
+  const verifyAdmin = async (req, res, next) => {
+    const requester = req.body.email;
+    const requesterAccount = await usersCollection.findOne({ email: requester });
+    if (requesterAccount.role === 'admin') {
+      next();
+    }
+    else {
+      res.status(403).send({ message: 'forbidden' });
+    }
+  }
   // post all login or singup user 
   app.put('/users/:email', async (req, res) => {
     const email = req.params.email;
@@ -50,14 +59,50 @@ async function run() {
       $set: user,
     };
     const result = await usersCollection.updateOne(filter, updatedDoc, options);
-    const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN, { expiresIn: '1h' });
+    const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN);
     res.send({result, token})
   })
 
+  app.put('/users/admin/:email', async (req, res) => {
+    const email = req.params.email;
+      const filter = { email: email };
+      const updateDoc = {
+        $set: { role: 'admin' },
+      };
+      const result = await usersCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    })
+
+  app.get('/admin/:email', async (req, res) => {
+    const email = req.params.email;
+    const user = await usersCollection.findOne({ email: email });
+    const isAdmin = user.role === 'admin';
+    res.send({ admin: isAdmin })
+  })
 
 
+  // get All users from Database
+  app.get('/users',   async (req, res) => {
+    const result = await usersCollection.find().toArray();
+    res.send(result);
+  })
+
+  // get a single users from mongodb 
+  app.get('/users/:id', verifyToken, async (req, res) => {
+    const id = req.params.id;
+    const query = { _id: ObjectId(id) };
+    const result = await usersCollection.findOne(query);
+    res.send(result);
+  })
+
+  // post parts 
+  app.post('/parts', verifyToken, async (req, res) => {
+    const newParts = req.body;
+    const result = await partsCollection.insertOne(newParts);
+    res.send(result);
+  })
   // get all parts
-  app.get('/parts', async (req, res) => {
+  app.get('/parts', verifyToken, async (req, res) => {
     const query = {};
     const result = await partsCollection.find(query).toArray();
     res.send(result);
@@ -70,7 +115,13 @@ async function run() {
     const result = await partsCollection.findOne(query);
     res.send(result);
   })
-
+  // delete a single parts 
+  app.delete('/parts/:id', verifyToken, async (req, res) => {
+    const id = req.params.id;
+    const filter = { _id: ObjectId(id) };
+    const result = await partsCollection.deleteOne(filter);
+    res.send(result);
+  })
   // get a single parts from mongodb 
   app.put('/parts/:id', async (req, res) => {
     const id = req.params.id;
@@ -93,14 +144,43 @@ async function run() {
     res.send(result);
   })
   // get purchase item from mongodb
-  app.get('/purchase', async (req, res) => {
+  app.get('/purchase', verifyToken, async (req, res) => {
     const email = req.query.email;
     const query = { buyerEmail: email };
     const result = await purchaseCollection.find(query).toArray();
     res.send(result);
   })
+
+  // get purchase item from mongodb
+  app.get('/allPurchase', verifyToken, async (req, res) => {
+    const query = {};
+    const result = await purchaseCollection.find(query).toArray();
+    res.send(result);
+  })
+
+  // insert new criteria to  allPurchase 
+  app.patch('/allPurchase/:id', async (req, res) => {
+    const id = req.params.id;
+    const shipped = req.body;
+    const filter = { _id: ObjectId(id) };
+    const updatedDoc = {
+      $set: (shipped)
+    }
+    const updatedShipment = await purchaseCollection.updateOne(filter, updatedDoc);
+    res.send(updatedShipment);
+  })
+
+  // delete a single purchase 
+  app.delete('/allPurchase/:id', async (req, res) => {
+    const id = req.params.id;
+    const filter = { _id: ObjectId(id) };
+    const result = await purchaseCollection.deleteOne(filter);
+    res.send(result);
+    console.log('Connected From All purchase');
+  })
+
   // get a single purchase from mongodb 
-  app.get('/purchase/:id', async (req, res) => {
+  app.get('/purchase/:id', verifyToken, async (req, res) => {
     const id = req.params.id;
     const query = { _id: ObjectId(id) };
     const result = await purchaseCollection.findOne(query);
@@ -129,7 +209,7 @@ async function run() {
     
   })
    // get users information
-  app.get('/userInfo', async (req, res) => {
+  app.get('/userInfo', verifyToken, async (req, res) => {
     const email = req.query.email;
     const query = { email: email };
     const result = await userInfoCollection.find(query).toArray();
@@ -137,29 +217,30 @@ async function run() {
   })
 
   // get a single userInfo from mongodb 
-  app.get('/userInfo/:id', async (req, res) => {
+  app.get('/userInfo/:id', verifyToken, async (req, res) => {
     const id = req.params.id;
     const query = { _id: ObjectId(id) };
     const result = await userInfoCollection.findOne(query);
     res.send(result);
   })
   
-  // get a single userInfo from mongodb
-  app.put('/userInfo/:id', async (req, res) => {
-    const id = req.params._id;
-    const updatedInfo = req.body;
-    const filter = { _id: ObjectId(id) };
+  // update a single userInfo from mongodb
+  app.put('/userInfo/:email',  async (req, res) => {
+    const email = req.params.email;
+    const information = req.body;
+    const filter = { email: email};
     const options = { upsert: true };
     const updatedDoc = {
       $set: {
-        education : updatedInfo.education,
-        location : updatedInfo.location,
-        number : updatedInfo.number,
-        linkedin : updatedInfo.linkedin,
+        education : information.education,
+        location : information.location,
+        number : information.number,
+        linkedin : information.linkedin,
       }
     }
-    const result = await userInfoCollection.updateOne(filter, updatedDoc, options);
+    const result = await userInfoCollection.updateMany(filter, updatedDoc, options);
     res.send(result);
+    console.log(information);
   })
 
   app.post('/create-payment-intent', async (req, res) => {
@@ -173,22 +254,6 @@ async function run() {
     });
     res.send({ clientSecret: paymentIntent.client_secret });
   });
-
- /*  app.patch('/purchase/:id', async (res, req) => {
-    const id = req.params.id;
-    const payment = req.body;
-    const filter = { _id: ObjectId(id) };
-    const updatedDoc = {
-      $set: {
-        paid: true,
-        transactionId :  payment.transactionId
-      }
-    }
-    const updatedPayment = await purchaseCollection.updateOne(filter, updatedDoc);
-    const result = await paymentsCollection.insertOne(payment);
-    res.send(updatedPayment);
-  }) */
-
   app.patch('/purchase/:id', async (req, res) => {
     const id = req.params.id;
     const payment = req.body;
