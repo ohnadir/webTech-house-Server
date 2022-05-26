@@ -102,7 +102,7 @@ async function run() {
     res.send(result);
   })
   // get all parts
-  app.get('/parts', verifyToken, async (req, res) => {
+  app.get('/parts', async (req, res) => {
     const query = {};
     const result = await partsCollection.find(query).toArray();
     res.send(result);
