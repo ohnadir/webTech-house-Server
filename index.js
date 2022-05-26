@@ -166,7 +166,6 @@ async function run() {
     const filter = { _id: ObjectId(id) };
     const result = await purchaseCollection.deleteOne(filter);
     res.send(result);
-    console.log('Connected From All purchase');
   })
 
   // get a single purchase from mongodb 
@@ -178,7 +177,7 @@ async function run() {
   })
 
   // post review 
-  app.post('/reviews', verifyToken, async (req, res) => {
+  app.post('/reviews',  async (req, res) => {
     const newReview = req.body;
     const result = await reviewsCollection.insertOne(newReview);
     res.send(result);
