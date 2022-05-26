@@ -39,7 +39,6 @@ async function run() {
       next();
     })
   }
- 
   // post all login or singup user 
   app.put('/users/:email', async (req, res) => {
     const email = req.params.email;
@@ -93,7 +92,7 @@ async function run() {
     res.send(result);
   })
   // get all parts
-  app.get('/parts', verifyToken, async (req, res) => {
+  app.get('/parts', async (req, res) => {
     const query = {};
     const result = await partsCollection.find(query).toArray();
     res.send(result);
@@ -186,7 +185,7 @@ async function run() {
   })
 
    // get all reviews
-   app.get('/reviews', verifyToken, async (req, res) => {
+   app.get('/reviews', async (req, res) => {
     const query = {};
     const result = await reviewsCollection.find(query).toArray();
     res.send(result);
