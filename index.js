@@ -39,16 +39,7 @@ async function run() {
       next();
     })
   }
-  const verifyAdmin = async (req, res, next) => {
-    const requester = req.body.email;
-    const requesterAccount = await usersCollection.findOne({ email: requester });
-    if (requesterAccount.role === 'admin') {
-      next();
-    }
-    else {
-      res.status(403).send({ message: 'forbidden' });
-    }
-  }
+ 
   // post all login or singup user 
   app.put('/users/:email', async (req, res) => {
     const email = req.params.email;
@@ -82,7 +73,7 @@ async function run() {
 
 
   // get All users from Database
-  app.get('/users',   async (req, res) => {
+  app.get('/users', verifyToken, async (req, res) => {
     const result = await usersCollection.find().toArray();
     res.send(result);
   })
@@ -102,7 +93,7 @@ async function run() {
     res.send(result);
   })
   // get all parts
-  app.get('/parts', async (req, res) => {
+  app.get('/parts', verifyToken, async (req, res) => {
     const query = {};
     const result = await partsCollection.find(query).toArray();
     res.send(result);
@@ -195,7 +186,7 @@ async function run() {
   })
 
    // get all reviews
-   app.get('/reviews', async (req, res) => {
+   app.get('/reviews', verifyToken, async (req, res) => {
     const query = {};
     const result = await reviewsCollection.find(query).toArray();
     res.send(result);
