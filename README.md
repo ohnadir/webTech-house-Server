@@ -1,4 +1,4 @@
-* Get all purchase from mongodb 
+* Create Some storeCollection for Store  products, orders and other information. 
 * Some post request on server site for ser demand
 * make admin is function for an admin can make another user to admin 
 * create verify token for Unothoraised user can not access database 
