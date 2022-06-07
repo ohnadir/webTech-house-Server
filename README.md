@@ -1,5 +1,5 @@
 * Create Some storeCollection for Store  products, orders and other information. 
-* Some post request on server site for ser demand.
+* Some post request on server site for user demand.
 * Admin functionality for an admin can make another user to admin.
 * Implement JSON Web Token  for Unothoraised user access.
 * If user want delete his purchase order 
